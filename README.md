@@ -1,625 +1,572 @@
-# Day 5 Demo — Complete Setup Guide
-## MacBook Pro · Wednesday Step-by-Step
+# 🏥 STTP Day 5 — Healthcare AI Deployment Pipeline
+### AI-Driven Medical Computer Vision: Generative and Agentic AI for Healthcare Applications
+**CoE — Image Processing and Video Analytics · CMRIT Bengaluru**
+
+> **Session:** Day 5 · 5th June 2026 · 6–8 PM · Online via Google Meet
+> **Speaker:** Prof. Apparsamy Perumal · Professor of Practice, CSE
 
 ---
 
-## ✅ PHASE 0 — Check Prerequisites (5 min)
+## 🎯 What You Will Build
 
-Open **Terminal** (Cmd + Space → type Terminal → Enter) and run each check:
+A **complete, production-grade healthcare AI deployment pipeline** — from a trained
+chest X-ray model all the way to a GitOps-managed Kubernetes deployment:
 
-```bash
-# Check Python (need 3.9 or higher)
-python3 --version
-
-# Check Git
-git --version
-
-# Check pip
-pip3 --version
+```
+Day 2 Model (ResNet18 CNN)
+       ↓
+Day 4 Grad-CAM Explainability
+       ↓
+ONNX Export  →  FastAPI REST API  →  Docker Container
+       ↓
+Docker Hub Registry
+       ↓
+ArgoCD (GitOps)  →  Kubernetes (Rancher Desktop k3s)
+       ↓
+Live Clinical API  ✅
 ```
 
-If Python is missing → download from **python.org/downloads** (get 3.11)
-If Git is missing → run `xcode-select --install` in terminal
+---
+
+## 🔗 How Every Day Connects
+
+| Day | Speaker | Topic | Connection to Day 5 |
+|-----|---------|-------|---------------------|
+| Day 1 | Prof. Krishna Sowjanya K | Medical Imaging Foundations | The NIH chest X-ray **dataset** |
+| Day 2 | Prof. Abdul Ashiq O K | CNNs & Transfer Learning | The **ResNet18 model** we deploy |
+| Day 3 | Prof. Varun Khare | Annotation & Video Analytics | The **labelled data** that trained it |
+| Day 4 | Dr. Sumathi D | XAI + Generative AI + Ethics | **Grad-CAM** + HIPAA audit trail |
+| **Day 5** | **Prof. Apparsamy Perumal** | **Deployment + Agentic AI** | **This repo** ← |
 
 ---
 
-## 📁 PHASE 1 — Create Project Folder (2 min)
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Your MacBook Pro                      │
+│                                                          │
+│  ┌─────────────┐    ┌──────────────┐    ┌────────────┐  │
+│  │  Jupyter    │    │   FastAPI    │    │   Docker   │  │
+│  │  Notebook   │───▶│   main.py    │───▶│  Container │  │
+│  │  (VS Code)  │    │  /predict    │    │ xray-api   │  │
+│  └─────────────┘    └──────────────┘    └────────────┘  │
+│         │                                      │         │
+│         ▼                                      ▼         │
+│  ┌─────────────┐                    ┌──────────────────┐ │
+│  │ xray_model  │                    │  Docker Hub      │ │
+│  │   .onnx     │                    │ appars/xray-api  │ │
+│  │  (43 MB)    │                    └──────────────────┘ │
+│  └─────────────┘                             │           │
+│                                              ▼           │
+│  ┌───────────────────────────────────────────────────┐   │
+│  │         Rancher Desktop (k3s cluster)             │   │
+│  │                                                   │   │
+│  │  ┌──────────┐   ┌──────────┐   ┌──────────────┐  │   │
+│  │  │ ArgoCD   │──▶│  Deploy  │──▶│  Pod 1       │  │   │
+│  │  │ (GitOps) │   │  ment    │   │  Pod 2       │  │   │
+│  │  │ :8080    │   │          │   │  Pod 3       │  │   │
+│  │  └──────────┘   └──────────┘   └──────────────┘  │   │
+│  │       ▲              NodePort → localhost:32285   │   │
+│  └───────┼───────────────────────────────────────────┘   │
+│          │                                               │
+└──────────┼───────────────────────────────────────────────┘
+           │
+    ┌──────┴──────┐
+    │   GitHub    │
+    │  (Git repo) │
+    │  k8s/       │
+    └─────────────┘
+```
+
+---
+
+## 📋 Prerequisites
+
+| Tool | Version | Install |
+|------|---------|---------|
+| Python | 3.10 or 3.11 | [python.org/downloads](https://python.org/downloads) |
+| Git | any | `xcode-select --install` (Mac) |
+| VS Code | latest | [code.visualstudio.com](https://code.visualstudio.com) |
+| Rancher Desktop | latest | [rancherdesktop.io](https://rancherdesktop.io) |
+| Docker Hub account | free | [hub.docker.com](https://hub.docker.com) |
+| GitHub account | free | [github.com](https://github.com) |
+
+**VS Code Extensions required:**
+- Python (by Microsoft)
+- Jupyter (by Microsoft)
+
+---
+
+## ⚡ Student Quick Start (Clone & Run)
+
+If you are a **workshop student** cloning this repo, follow these steps:
 
 ```bash
-# Go to your home directory
-cd ~
-
-# Create the project folder
-mkdir sttp-day5-demo
-
-# Enter the folder
+# 1. Clone the repository
+git clone https://github.com/appars/sttp-day5-demo.git
 cd sttp-day5-demo
 
-# Confirm you are inside it
-pwd
-# Should show: /Users/YOUR_NAME/sttp-day5-demo
-```
-
----
-
-## 📋 PHASE 2 — Copy the Notebook File (2 min)
-
-The notebook was downloaded from Claude.
-It is likely in your **Downloads** folder.
-
-```bash
-# Copy notebook from Downloads into the project folder
-cp ~/Downloads/Day5_Demo_Pipeline.ipynb .
-
-# Confirm it is there
-ls -la
-# Should show: Day5_Demo_Pipeline.ipynb
-```
-
-If you saved it somewhere else, use Finder to locate it,
-then drag it into the sttp-day5-demo folder.
-
----
-
-## 🗂️ PHASE 3 — Create .gitignore (2 min)
-
-Before Git setup, tell Git what NOT to track:
-
-```bash
-# Create .gitignore file
-cat > .gitignore << 'EOF'
-# Python virtual environment
-sttp-demo/
-__pycache__/
-*.pyc
-*.pyo
-
-# Jupyter checkpoints
-.ipynb_checkpoints/
-
-# Generated files (created by notebook at runtime)
-sample_xray.png
-gradcam_result.png
-xray_model.onnx
-audit.log
-main.py
-Dockerfile
-requirements.txt
-
-# Mac system files
-.DS_Store
-EOF
-
-# Confirm it was created
-cat .gitignore
-```
-
----
-
-## 🔧 PHASE 4 — Initialize Git Repository (5 min)
-
-```bash
-# Initialize Git in the project folder
-git init
-
-# Set your name and email (first time only)
-git config --global user.name "Apparsamy Perumal"
-git config --global user.email "your.email@cmrit.ac.in"
-
-# Add the notebook to Git
-git add Day5_Demo_Pipeline.ipynb .gitignore
-
-# First commit
-git commit -m "feat: add Day 5 STTP demo notebook and gitignore"
-
-# Confirm commit
-git log --oneline
-# Should show: one commit with your message
-```
-
-### Optional — Push to GitHub (skip if no GitHub account)
-
-```bash
-# 1. Go to github.com → New Repository
-#    Name: sttp-day5-demo
-#    Visibility: Private
-#    Do NOT add README or .gitignore (we already have one)
-#    Click Create Repository
-
-# 2. Copy the remote URL shown on GitHub, then run:
-git remote add origin https://github.com/YOUR_USERNAME/sttp-day5-demo.git
-git branch -M main
-git push -u origin main
-```
-
----
-
-## 🐍 PHASE 5 — Create Python Virtual Environment (5 min)
-
-A virtual environment keeps demo packages separate from everything else.
-This is the key step to avoid environment errors.
-
-```bash
-# Make sure you are in the project folder
-cd ~/sttp-day5-demo
-
-# Create virtual environment named sttp-demo
+# 2. Create and activate virtual environment
 python3 -m venv sttp-demo
+source sttp-demo/bin/activate          # Mac/Linux
+# sttp-demo\Scripts\activate           # Windows
 
-# Activate it
-source sttp-demo/bin/activate
-
-# Confirm it is active (you should see (sttp-demo) in your prompt)
-which python
-# Should show: /Users/YOUR_NAME/sttp-day5-demo/sttp-demo/bin/python
-```
-
----
-
-## 📦 PHASE 6 — Install All Packages (15–20 min)
-
-With the virtual environment active, install everything:
-
-```bash
-# Upgrade pip first
+# 3. Install all packages
 pip install --upgrade pip
-
-# Install all packages needed for the demo
 pip install \
   torch torchvision \
-  onnx onnxruntime \
+  onnx onnxruntime onnxscript \
   fastapi "uvicorn[standard]" \
   pillow numpy matplotlib \
   requests python-multipart \
   ipykernel jupyter
 
-# This takes 10-15 minutes — normal, PyTorch is large
-```
-
-**Verify key packages installed correctly:**
-
-```bash
-python -c "import torch; print('PyTorch:', torch.__version__)"
-python -c "import onnxruntime; print('ONNX Runtime: OK')"
-python -c "import fastapi; print('FastAPI: OK')"
-python -c "import torchvision; print('TorchVision: OK')"
-```
-
-All four lines should print without errors.
-
----
-
-## 🔑 PHASE 7 — Register Jupyter Kernel (2 min)
-
-This tells VS Code which Python to use for the notebook:
-
-```bash
-# Register the virtual environment as a Jupyter kernel
+# 4. Register Jupyter kernel
 python -m ipykernel install --user \
   --name=sttp-demo \
   --display-name="STTP Day5 Demo (Python 3)"
 
-# Confirm it was registered
-jupyter kernelspec list
-# Should show sttp-demo in the list
-```
-
----
-
-## 💻 PHASE 8 — Install and Configure VS Code (10 min)
-
-### Install VS Code
-Download from **code.visualstudio.com** → install the .dmg → drag to Applications
-
-### Install Extensions
-Open VS Code → press `Cmd + Shift + X` → search and install:
-
-- **Python** (by Microsoft) — install
-- **Jupyter** (by Microsoft) — install
-
-### Open the Project
-
-```bash
-# Open the project folder in VS Code from Terminal
-cd ~/sttp-day5-demo
+# 5. Open in VS Code
 code .
 ```
 
-### Select the Right Kernel
-1. In VS Code, click on `Day5_Demo_Pipeline.ipynb`
-2. Top right corner → click **"Select Kernel"**
-3. Choose **"STTP Day5 Demo (Python 3)"**
-4. If not visible → click "Jupyter Kernel..." → "Python Environments" → pick sttp-demo
-
-### VS Code Font Size (important for demo screen sharing)
-- Press `Cmd + ,` to open Settings
-- Search "font size"
-- Set **Editor: Font Size** to **16**
-- This ensures audience can read your code clearly
+Then open `Day5_Demo_Pipeline_v2.ipynb` → select kernel **STTP Day5 Demo** → run cells.
 
 ---
 
-## 🚀 PHASE 9 — Run the Notebook (30 min)
+## 📁 Repository Structure
 
-In VS Code with the notebook open:
-
-### Run All Cells
-- Press `Cmd + Shift + P` → type "Run All" → select **"Notebook: Run All Cells"**
-- Or click **Run All** button at top of notebook
-
-### What to watch for in each step:
-
-**Step 0 (Install):** Should print ✅ for each package
 ```
-  ✅ torch torchvision
-  ✅ onnx onnxruntime
-  ...
-🎉 All packages installed!
+sttp-day5-demo/
+│
+├── Day5_Demo_Pipeline_v2.ipynb   ← Main demo notebook (run this)
+├── README.md                     ← This file
+├── .gitignore
+│
+├── k8s/                          ← Kubernetes manifests (ArgoCD reads these)
+│   ├── deployment.yaml           ← 2 replicas, readiness probe
+│   └── service.yaml              ← NodePort service
+│
+└── sttp-demo/                    ← Virtual environment (not in Git)
 ```
 
-**Step 0 (Imports):** Should print device and version info
+**Files generated at runtime** (by notebook — not in Git):
 ```
-  PyTorch  : 2.x.x
-  Device   : cpu   ← (mps on Apple Silicon is fine too)
-  Labels   : ['Normal', 'Pneumonia']
-✅ Imports ready
-```
-
-**Step 1 (Load Model):** ResNet18 downloads ImageNet weights (~45 MB, one-time)
-```
-✅ ResNet18 loaded
-✅ X-ray downloaded → sample_xray.png
-```
-Image of chest X-ray should appear below the cell.
-
-**Step 2 (Grad-CAM):** Three-panel image appears (Original | Heatmap | Overlay)
-```
-  Prediction   : Normal   ← or Pneumonia (random weights, that's OK)
-  Confidence   : xx.x%
-✅ Saved → gradcam_result.png
-```
-
-**Step 3 (ONNX):** Model exported and verified
-```
-✅ Exported & validated → xray_model.onnx  (44.7 MB)
-  Prediction : Normal
-  Latency    : xx.x ms
-💡 Same result — ZERO PyTorch. This runs anywhere!
-```
-
-**Step 4 (Write main.py):** File created — check left sidebar
-```
-✅ main.py written
-```
-
-**Step 5 (Write Dockerfile):** Files created
-```
-✅ Dockerfile written
-✅ requirements.txt written
-📁 Your complete deployment package:
-  ✅  main.py          ...
-  ✅  xray_model.onnx  ...
-```
-
-**Step 6 (Audit Log):** Log entries displayed
-```
-📋 Contents of audit.log:
-  🔴  12:34:56  Pneumonia  conf:0.847 ...
-  🟢  12:35:14  Normal     conf:0.923 ...
-```
-
-**Step 7 (Summary):** Just a markdown cell — no code to run.
-
-### Commit generated files to Git (optional)
-```bash
-cd ~/sttp-day5-demo
-git add sample_xray.png gradcam_result.png xray_model.onnx \
-        main.py Dockerfile requirements.txt audit.log
-git commit -m "feat: add generated demo outputs from notebook run"
+main.py              ← FastAPI application
+Dockerfile           ← Container build instructions
+requirements.txt     ← Python dependencies
+xray_model.onnx      ← Exported ONNX model (43 MB)
+sample_xray.png      ← Downloaded chest X-ray
+gradcam_result.png   ← Grad-CAM explainability output
+audit.log            ← HIPAA-compliant inference log
 ```
 
 ---
 
-## 🌐 PHASE 10 — Test FastAPI (10 min)
+## 🚀 Complete Setup Guide (Step by Step)
 
-The notebook is still open. Now open a **second terminal**:
+### PHASE 1 — Project Setup
 
 ```bash
-# Open a NEW terminal window: Cmd + T (or Cmd + N in Terminal)
+# Create project folder
+cd ~
+mkdir sttp-day5-demo
+cd sttp-day5-demo
 
-# Navigate to project folder and activate environment
-cd ~/sttp-day5-demo
+# Initialise Git
+git init
+git config --global user.name "Your Name"
+git config --global user.email "your.email@institution.ac.in"
+```
+
+### PHASE 2 — Python Environment
+
+```bash
+# Create virtual environment
+python3 -m venv sttp-demo
 source sttp-demo/bin/activate
 
-# Start the FastAPI server
+# Confirm it is active
+which python
+# Should show: .../sttp-day5-demo/sttp-demo/bin/python
+
+# Install all packages (includes onnxscript for PyTorch 2.4+)
+pip install --upgrade pip
+pip install \
+  torch torchvision \
+  onnx onnxruntime onnxscript \
+  fastapi "uvicorn[standard]" \
+  pillow numpy matplotlib \
+  requests python-multipart \
+  ipykernel jupyter
+
+# Verify
+python -c "import torch; print('PyTorch:', torch.__version__)"
+python -c "import onnxruntime; print('ONNX Runtime: OK')"
+python -c "import fastapi; print('FastAPI: OK')"
+python -c "import onnxscript; print('onnxscript: OK')"
+```
+
+### PHASE 3 — Run the Notebook
+
+Open VS Code → select **STTP Day5 Demo** kernel → run cells **one by one**:
+
+| Cell | Step | Expected Output |
+|------|------|-----------------|
+| 1 | Install packages | `✅ All packages installed!` |
+| 2 | Imports | `✅ Imports ready` |
+| 3 | Load ResNet18 + X-ray | X-ray image appears |
+| 4 | Grad-CAM | 3-panel heatmap appears |
+| 5 | ONNX export + merge | `✅ Exported, merged & validated → xray_model.onnx (43.x MB)` |
+| 6 | Write main.py | `✅ main.py written` |
+| 7 | Test API (after uvicorn) | JSON prediction response |
+| 8 | Write Dockerfile | `✅ Dockerfile written` |
+| 9 | Audit log | Log entries displayed |
+
+> ⚠️ **Important:** Do NOT use "Run All". Cell 7 (API test) requires
+> uvicorn to be running first — see Phase 4 below.
+
+### PHASE 4 — Test FastAPI
+
+```bash
+# Open a NEW terminal tab — keep this running
+cd ~/sttp-day5-demo
+source sttp-demo/bin/activate
 uvicorn main:app --reload
 ```
 
-You should see:
+Wait for:
 ```
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process
 INFO:     Application startup complete.
 ```
 
-### Test in Browser
-Open Chrome/Safari → go to **http://localhost:8000/docs**
+Then open Chrome → **http://localhost:8000/docs**
 
-You should see the Swagger UI with two endpoints:
-- `GET /health`
-- `POST /predict`
+Test it:
+- Click **POST /predict** → Try it out
+- Choose File → select `sample_xray.png`
+- Click **Execute**
+- See JSON prediction with confidence score ✅
 
-### Test Health Check
 ```bash
-# Open a THIRD terminal tab (Cmd + T)
-cd ~/sttp-day5-demo
-source sttp-demo/bin/activate
-
+# Or test via curl
 curl http://localhost:8000/health
-# Should return: {"status":"ok","model":"xray_model.onnx"}
-```
-
-### Test Prediction via Swagger UI
-1. In browser at `localhost:8000/docs`
-2. Click **POST /predict**
-3. Click **"Try it out"**
-4. Click **"Choose File"** → select `sample_xray.png`
-5. Click **"Execute"**
-6. See JSON response appear with prediction + confidence
-
-### Test Prediction via curl
-```bash
 curl -X POST "http://localhost:8000/predict" \
-  -H "accept: application/json" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@sample_xray.png;type=image/png"
 ```
 
-Expected response:
-```json
-{
-  "prediction": "Normal",
-  "confidence": 0.6234,
-  "probabilities": {"Normal": 0.6234, "Pneumonia": 0.3766},
-  "latency_ms": 38.4,
-  "timestamp": "2026-06-03T...",
-  "model_version": "resnet18-onnx-v1.0",
-  "filename": "sample_xray.png"
-}
-```
+### PHASE 5 — Docker Build & Run
 
-Stop the server: press **Ctrl + C** in the uvicorn terminal.
-
----
-
-## 🐳 PHASE 11 — Test Docker (20 min)
-
-### Start Rancher Desktop
-- Open Rancher Desktop from Applications
-- Wait for it to fully start (the green indicator in menu bar)
-- Confirm Docker is working:
 ```bash
-docker --version
-docker ps
-# Should show empty table (no error)
-```
-
-### Build the Docker Image
-```bash
-# Make sure you are in the project folder
+# Build image (5-10 min first time — normal)
 cd ~/sttp-day5-demo
-
-# Build the image (takes 5-10 minutes FIRST TIME — normal)
 docker build -t xray-api:v1 .
-```
 
-You will see layers being downloaded and built:
-```
-[1/3] FROM docker.io/library/python:3.11-slim
-[2/3] RUN pip install --no-cache-dir -r requirements.txt
-[3/3] COPY xray_model.onnx .
-Successfully built xxxxxxxx
-Successfully tagged xray-api:v1
-```
-
-### Run the Container
-```bash
+# Run container
 docker run -p 8000:8000 xray-api:v1
-```
 
-Should show:
-```
-INFO:     Uvicorn running on http://0.0.0.0:8000
-INFO:     Application startup complete.
-```
-
-### Test the Container
-```bash
-# In another terminal
+# Test
 curl http://localhost:8000/health
-# Should return: {"status":"ok","model":"xray_model.onnx"}
+# {"status":"ok","model":"xray_model.onnx"}
 ```
 
-### Stop the Container
-Press **Ctrl + C** in the docker run terminal.
+### PHASE 6 — Push to Docker Hub
 
-### Tag for "production" (optional but good to show)
 ```bash
-docker tag xray-api:v1 xray-api:latest
-docker images
-# Shows both xray-api:v1 and xray-api:latest
+# Login
+docker login
+# Enter your Docker Hub username and password
+
+# Tag with your username
+docker tag xray-api:v1 YOUR_DOCKERHUB_USERNAME/xray-api:v1
+
+# Push
+docker push YOUR_DOCKERHUB_USERNAME/xray-api:v1
+
+# Make repository PUBLIC on hub.docker.com
+# (Repository → Settings → Make Public)
 ```
 
----
-
-## 🔢 PHASE 12 — kubectl Demo with Rancher Desktop (Optional)
-
-If you want to show Kubernetes (more impressive than plain Docker):
+### PHASE 7 — Update k8s Manifests
 
 ```bash
-# Create deployment YAML
-cat > deployment.yaml << 'EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: xray-api
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: xray-api
-  template:
-    metadata:
-      labels:
-        app: xray-api
-    spec:
-      containers:
-      - name: xray-api
-        image: xray-api:v1
-        imagePullPolicy: Never
-        ports:
-        - containerPort: 8000
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: xray-api-svc
-spec:
-  selector:
-    app: xray-api
-  ports:
-  - port: 8000
-    targetPort: 8000
-  type: NodePort
-EOF
+# Update the image name in deployment.yaml
+# Replace YOUR_DOCKERHUB_USERNAME with your actual username
+sed -i '' 's|appars/xray-api:v1|YOUR_DOCKERHUB_USERNAME/xray-api:v1|g' \
+  k8s/deployment.yaml
 
-# Deploy to local k3s cluster
-kubectl apply -f deployment.yaml
+# Commit and push to GitHub
+git add k8s/
+git commit -m "feat: add k8s manifests for ArgoCD deployment"
+git push origin main
+```
 
-# Watch pods start (most visual moment)
-kubectl get pods -w
-# Shows two pods going Running -> Running
+### PHASE 8 — Install ArgoCD on Rancher Desktop
 
-# Scale live during demo
-kubectl scale deployment xray-api --replicas=3
+```bash
+# Confirm k3s is running
+kubectl get nodes
+# Should show: rancher-desktop   Ready
+
+# Create ArgoCD namespace
+kubectl create namespace argocd
+
+# Install ArgoCD
+kubectl apply -n argocd \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# Wait for all pods to be Running (2-3 minutes)
+kubectl get pods -n argocd -w
+# Press Ctrl+C when all show Running
+
+# Get admin password (copy this!)
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d && echo
+
+# Port-forward ArgoCD UI (keep this terminal open)
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
+
+Open Chrome → **https://localhost:8080**
+- Username: `admin`
+- Password: (copied above)
+
+### PHASE 9 — Create ArgoCD Application
+
+```bash
+# Install ArgoCD CLI
+brew install argocd
+
+# Login
+argocd login localhost:8080 \
+  --username admin \
+  --password YOUR_ARGOCD_PASSWORD \
+  --insecure
+
+# Create application pointing to YOUR GitHub repo
+argocd app create xray-api \
+  --repo https://github.com/YOUR_GITHUB_USERNAME/sttp-day5-demo \
+  --path k8s \
+  --dest-server https://kubernetes.default.svc \
+  --dest-namespace default \
+  --sync-policy automated \
+  --self-heal
+
+# Check status
+argocd app get xray-api
+# Should show: Health: Healthy, Sync: Synced
+```
+
+### PHASE 10 — Verify Full Pipeline
+
+```bash
+# Check pods running
 kubectl get pods
-# Now shows 3 pods
+# NAME                        READY   STATUS    RESTARTS
+# xray-api-xxxx-yyyy          1/1     Running   0
+# xray-api-xxxx-zzzz          1/1     Running   0
 
-# Port forward to test
-kubectl port-forward svc/xray-api-svc 8001:8000 &
-curl http://localhost:8001/health
+# Get the NodePort
+NODE_PORT=$(kubectl get svc xray-api-svc \
+  -o jsonpath='{.spec.ports[0].nodePort}')
+echo "API running at: http://localhost:$NODE_PORT"
 
-# Clean up after demo
-kubectl delete -f deployment.yaml
+# Test via NodePort
+curl http://localhost:$NODE_PORT/health
+# {"status":"ok","model":"xray_model.onnx"}
+
+# Or port-forward directly
+kubectl port-forward svc/xray-api-svc 9000:8000 &
+curl http://localhost:9000/health
 ```
 
-Commit the deployment file:
+Open Chrome → **http://localhost:NODE_PORT/docs** → full Swagger UI via Kubernetes! ✅
+
+---
+
+## 🎯 GitOps Live Demo (Friday Money Shot)
+
+Show the audience live auto-deployment — **this is the most impressive moment:**
+
 ```bash
-git add deployment.yaml
-git commit -m "feat: add Kubernetes deployment manifest"
+# Step 1 — Scale from 2 to 3 replicas (one line change in Git)
+sed -i '' 's/replicas: 2/replicas: 3/' k8s/deployment.yaml
+
+# Step 2 — Commit and push
+git add k8s/deployment.yaml
+git commit -m "scale: increase to 3 replicas for peak load"
+git push origin main
+
+# Step 3 — Switch to ArgoCD UI at https://localhost:8080
+# Watch ArgoCD detect the change and spin up a 3rd pod automatically!
+```
+
+**What to say to the audience:**
+
+> *"I changed one line in a YAML file and pushed to Git.
+> That's the only action I took. Now watch ArgoCD — it detects
+> the change, syncs the cluster to match Git, and Kubernetes
+> spins up a third pod automatically. No SSH. No manual deploy.
+> Git is the single source of truth. This is GitOps."*
+
+---
+
+## 🔑 Key Commands Reference
+
+```bash
+# ── Environment ──────────────────────────────────────────────
+source sttp-demo/bin/activate        # Activate virtual env
+deactivate                            # Deactivate
+
+# ── FastAPI ──────────────────────────────────────────────────
+uvicorn main:app --reload             # Start API server
+uvicorn main:app --host 0.0.0.0 --port 8000  # Production start
+
+# ── Docker ───────────────────────────────────────────────────
+docker build -t xray-api:v1 .        # Build image
+docker run -p 8000:8000 xray-api:v1  # Run container
+docker images                         # List images
+docker ps                             # List running containers
+docker push appars/xray-api:v1       # Push to Docker Hub
+
+# ── Kubernetes ───────────────────────────────────────────────
+kubectl get pods                      # List pods
+kubectl get svc                       # List services
+kubectl get nodes                     # Confirm cluster running
+kubectl describe pod POD_NAME         # Debug a pod
+kubectl logs -l app=xray-api          # View pod logs
+kubectl scale deployment xray-api --replicas=3  # Scale up
+
+# ── ArgoCD ───────────────────────────────────────────────────
+argocd app get xray-api               # App status
+argocd app sync xray-api              # Manual sync
+argocd app history xray-api           # Deployment history
+
+# ── Port Forwards (keep in separate terminals) ────────────────
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+kubectl port-forward svc/xray-api-svc 9000:8000
 ```
 
 ---
 
-## ✅ PHASE 13 — Final Verification Checklist
+## 🎯 Demo Day Checklist (Friday 5:30 PM)
 
-Run through this before closing everything:
-
-```bash
-cd ~/sttp-day5-demo
-
-# Verify all files exist
-ls -lh
-```
-
-You should see ALL of these:
-```
-Day5_Demo_Pipeline.ipynb   ← the notebook
-sample_xray.png            ← test X-ray image
-gradcam_result.png         ← Grad-CAM output
-xray_model.onnx            ← exported model (~44 MB)
-main.py                    ← FastAPI application
-Dockerfile                 ← container instructions
-requirements.txt           ← locked dependencies
-audit.log                  ← HIPAA log
-deployment.yaml            ← Kubernetes manifest (if created)
-sttp-demo/                 ← virtual environment
-.gitignore
-```
-
-### Git status check
-```bash
-git log --oneline
-git status
-# Working tree should be clean
-```
-
-### Full pipeline smoke test (do this in one go)
-```bash
-# 1. Activate environment
-source sttp-demo/bin/activate
-
-# 2. Quick Python check
-python -c "
-import torch, onnxruntime, fastapi
-print('PyTorch:', torch.__version__)
-print('ONNX Runtime: OK')
-print('FastAPI: OK')
-print('All good — ready for Friday!')
-"
-
-# 3. ONNX inference check
-python -c "
-import onnxruntime as rt, numpy as np
-sess = rt.InferenceSession('xray_model.onnx')
-dummy = np.random.randn(1,3,224,224).astype('float32')
-out = sess.run(None, {sess.get_inputs()[0].name: dummy})
-print('ONNX inference: OK, output shape:', out[0].shape)
-"
-
-# 4. Docker image check
-docker images xray-api
-# Should show xray-api:v1
-```
-
----
-
-## 🎯 Demo Day Quick-Start (Friday 5:30 PM)
-
-Just before going live, run these 4 commands:
+Run through this **before** going live at 6 PM:
 
 ```bash
-# 1. Go to project
-cd ~/sttp-day5-demo
+# 1. Start Rancher Desktop — wait for green indicator
 
 # 2. Activate environment
+cd ~/sttp-day5-demo
 source sttp-demo/bin/activate
 
-# 3. Open VS Code (notebook already has outputs from Thursday dry run)
+# 3. Confirm Docker image exists
+docker images appars/xray-api
+# Should show: appars/xray-api   v1   ...
+
+# 4. Confirm Kubernetes pods running
+kubectl get pods
+# Should show 2-3 pods Running
+
+# 5. Confirm ArgoCD running
+kubectl get pods -n argocd | grep Running | wc -l
+# Should show: 5
+
+# 6. Start port forwards (two separate terminal tabs)
+kubectl port-forward svc/argocd-server -n argocd 8080:443 &
+kubectl port-forward svc/xray-api-svc 9000:8000 &
+
+# 7. Open in browser — confirm both load
+# https://localhost:8080  → ArgoCD (green Healthy + Synced)
+# http://localhost:9000/docs → Swagger UI (API ready)
+
+# 8. Open VS Code with notebook outputs already visible
 code .
 
-# 4. Start Docker container (pre-built, instant start)
-docker run -p 8000:8000 xray-api:v1
-```
+# 9. Open slides in PowerPoint
 
-Then open Rancher Desktop, open Chrome at `localhost:8000/docs`, open your slides — you are ready.
+# 10. Enable Do Not Disturb on Mac
+```
 
 ---
 
 ## 🆘 Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
-| `python3: command not found` | Install from python.org/downloads |
-| `(sttp-demo)` not showing in prompt | Run `source sttp-demo/bin/activate` again |
-| `ModuleNotFoundError: torch` | Wrong kernel selected — pick sttp-demo in VS Code |
-| ONNX Runtime error on Apple Silicon | Run `pip install onnxruntime` (not onnxruntime-silicon) |
-| Docker: `Cannot connect to daemon` | Open Rancher Desktop, wait for green indicator |
-| Port 8000 already in use | Run `lsof -ti:8000 | xargs kill -9` |
-| Notebook kernel dead | Click "Restart Kernel" in VS Code top bar |
-| `git: command not found` | Run `xcode-select --install` |
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| `ModuleNotFoundError: onnxscript` | PyTorch 2.4+ needs it | `pip install onnxscript` |
+| ONNX exports two files (.onnx + .onnx.data) | PyTorch 2.4 new exporter | Use v2 notebook — merge cell included |
+| Docker can't find xray_model.onnx.data | Split model files | Run merge cell in notebook first |
+| `Cannot connect to Docker daemon` | Rancher Desktop not running | Open Rancher Desktop, wait for green |
+| Port 8000 already in use | Previous server running | `lsof -ti:8000 \| xargs kill -9` |
+| ArgoCD pods stuck Pending | Insufficient resources | `kubectl describe pod -n argocd` |
+| Image pull error in pods | Docker Hub image is private | Go to hub.docker.com → make repo Public |
+| `kubectl: command not found` | Not in PATH | Rancher Desktop → Preferences → enable kubectl |
+| ArgoCD shows OutOfSync | Git change detected | Click Sync in UI or `argocd app sync xray-api` |
+| Notebook kernel dead | Kernel crashed | Click Restart Kernel in VS Code top bar |
+| Wrong Python in kernel | venv not selected | VS Code top right → Select Kernel → sttp-demo |
+| `opset_version 13` warnings | Old opset setting | Use v2 notebook — opset 18 already set |
 
 ---
 
-*Prepared for STTP Day 5 — AI-Driven Medical Computer Vision*
-*Prof. Apparsamy Perumal · CMRIT Bengaluru · 5th June 2026*
+## 📦 Package Versions (tested and working)
+
+```
+torch==2.4.x or 2.5.x
+torchvision==0.19.x or 0.20.x
+onnx==1.16.x
+onnxruntime==1.18.x
+onnxscript==0.1.x          ← Required for PyTorch 2.4+
+fastapi==0.111.x
+uvicorn==0.29.x
+pillow==10.x
+numpy==1.26.x
+matplotlib==3.9.x
+```
+
+---
+
+## 📚 Resources & Further Reading
+
+| Resource | Link | What for |
+|----------|------|----------|
+| HuggingFace Hub | huggingface.co | Pre-trained models, datasets, demos |
+| MLflow | mlflow.org | Experiment tracking |
+| Weights & Biases | wandb.ai | Real-time training dashboards |
+| Papers with Code | paperswithcode.com | Benchmarks + reproducible baselines |
+| MONAI | monai.io | Medical imaging AI framework |
+| LangChain | github.com/langchain-ai/langchain | Agentic AI framework |
+| NIH ChestX-ray14 | nihcc.app.box.com/v/ChestXray-NIHCC | Real chest X-ray dataset |
+| ArgoCD Docs | argo-cd.readthedocs.io | GitOps tool documentation |
+| FastAPI Docs | fastapi.tiangolo.com | API framework documentation |
+| ONNX Runtime | onnxruntime.ai | Cross-platform model inference |
+
+---
+
+## 🔮 Next Steps for Students
+
+1. **Fine-tune the model** on the full NIH ChestX-ray14 dataset (50,000 labelled images)
+2. **Add `/explain` endpoint** — returns Grad-CAM overlay as an image
+3. **Add multi-class support** — 14 disease categories instead of binary
+4. **Build an agentic wrapper** — LangChain agent that calls `/predict`, retrieves
+   clinical guidelines from a vector DB, and drafts a structured clinical report
+5. **Add CI/CD pipeline** — GitHub Actions builds and pushes Docker image on every commit,
+   ArgoCD deploys automatically
+6. **Federated learning** — train the model across multiple hospitals without
+   sharing patient data
+
+---
+
+## 📄 License
+
+This project is created for educational purposes as part of the STTP workshop.
+The ResNet18 model uses ImageNet pre-trained weights (see PyTorch model zoo licence).
+The sample chest X-ray is from Wikimedia Commons (public domain).
+
+---
+
+*STTP — AI-Driven Medical Computer Vision: Generative and Agentic AI for Healthcare Applications*
+*CoE — Image Processing and Video Analytics · CMRIT Bengaluru*
+*Prof. Apparsamy Perumal · Day 5 · 5th June 2026*
