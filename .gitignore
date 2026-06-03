@@ -1,0 +1,20 @@
+# Python virtual environment
+sttp-demo/
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Generated files (created by notebook at runtime)
+sample_xray.png
+gradcam_result.png
+xray_model.onnx
+audit.log
+main.py
+Dockerfile
+requirements.txt
+
+# Mac system files
+.DS_Store
